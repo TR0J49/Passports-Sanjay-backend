@@ -90,20 +90,33 @@ router.get('/:id/download-cv', protect, async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
 
-    if (!user || !user.cv) {
-      return res.status(404).json({ message: 'CV not found' });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (!user.cv) {
+      return res.status(404).json({ message: 'No CV uploaded for this user' });
     }
 
     const filePath = path.join(__dirname, '../uploads', user.cv);
 
+    // Check if file exists
     if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ message: 'File not found' });
+      console.error('CV file not found at:', filePath);
+      return res.status(404).json({ message: 'CV file not found on server' });
+    }
+
+    // Get file stats
+    const stats = fs.statSync(filePath);
+    if (stats.size === 0) {
+      return res.status(400).json({ message: 'CV file is empty' });
     }
 
     // Set proper headers for file download
     const fileName = `${user.name}-CV${path.extname(user.cv)}`;
     res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
     res.setHeader('Content-Type', 'application/octet-stream');
+    res.setHeader('Content-Length', stats.size);
     
     // Send file
     res.sendFile(filePath, (err) => {
