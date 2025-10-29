@@ -164,4 +164,52 @@ router.get('/', protect, async (req, res) => {
   }
 });
 
+// Debug: Check CV file status (Protected)
+router.get('/:id/cv-status', protect, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    if (!user.cv) {
+      return res.json({ 
+        hasCV: false, 
+        message: 'No CV uploaded for this user',
+        userId: user._id,
+        userName: user.name
+      });
+    }
+    
+    const filePath = path.join(__dirname, '../uploads', user.cv);
+    const fileExists = fs.existsSync(filePath);
+    
+    if (!fileExists) {
+      const stats = fs.statSync(filePath).catch(() => null);
+      return res.json({ 
+        hasCV: true,
+        cvFileName: user.cv,
+        fileExists: false,
+        filePath: filePath,
+        message: 'CV file not found on server'
+      });
+    }
+    
+    const stats = fs.statSync(filePath);
+    
+    res.json({ 
+      hasCV: true,
+      cvFileName: user.cv,
+      fileExists: true,
+      filePath: filePath,
+      fileSize: stats.size,
+      message: 'CV file found and ready for download'
+    });
+  } catch (error) {
+    console.error('CV status check error:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
 module.exports = router;
