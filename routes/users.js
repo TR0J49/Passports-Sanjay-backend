@@ -97,11 +97,17 @@ router.get('/:id/download-cv', protect, async (req, res) => {
     const filePath = path.join(__dirname, '../uploads', user.cv);
 
     if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ message: 'File not found' });
+      console.error(`CV file not found at: ${filePath}`);
+      return res.status(404).json({ message: 'File not found on server' });
     }
 
+    // Set proper headers for file download
+    res.setHeader('Content-Disposition', `attachment; filename="${user.name}-CV${path.extname(user.cv)}"`);
+    res.setHeader('Content-Type', 'application/octet-stream');
+    
     res.download(filePath, `${user.name}-CV${path.extname(user.cv)}`);
   } catch (error) {
+    console.error('CV download error:', error.message);
     res.status(500).json({ message: error.message });
   }
 });
@@ -118,11 +124,17 @@ router.get('/:id/photo', async (req, res) => {
     const filePath = path.join(__dirname, '../uploads', user.photo);
 
     if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ message: 'File not found' });
+      console.error(`Photo file not found at: ${filePath}`);
+      return res.status(404).json({ message: 'Photo file not found on server' });
     }
 
+    // Set proper headers for image
+    res.setHeader('Content-Type', 'image/jpeg');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    
     res.sendFile(filePath);
   } catch (error) {
+    console.error('Photo retrieval error:', error.message);
     res.status(500).json({ message: error.message });
   }
 });
