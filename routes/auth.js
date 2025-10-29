@@ -74,11 +74,18 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ message: 'Invalid username or password' });
     }
 
+    // Validate JWT_SECRET
+    const jwtSecret = process.env.JWT_SECRET || 'default_jwt_secret_key_change_in_production';
+    
+    if (!process.env.JWT_SECRET) {
+      console.warn('⚠️ WARNING: JWT_SECRET environment variable is not set. Using default secret. Set JWT_SECRET in production!');
+    }
+
     const token = jwt.sign({ 
       id: admin._id, 
       username: admin.username,
       email: admin.email 
-    }, process.env.JWT_SECRET, {
+    }, jwtSecret, {
       expiresIn: '7d',
     });
 
