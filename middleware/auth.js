@@ -8,11 +8,14 @@ const protect = (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    // Use same JWT_SECRET as login (with fallback)
+    const jwtSecret = process.env.JWT_SECRET || 'default_jwt_secret_key_change_in_production';
+    const decoded = jwt.verify(token, jwtSecret);
     req.admin = decoded;
     next();
   } catch (error) {
-    res.status(401).json({ message: 'Invalid token' });
+    console.error('Token verification error:', error.message);
+    res.status(401).json({ message: 'Invalid token', error: error.message });
   }
 };
 
